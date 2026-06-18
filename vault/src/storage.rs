@@ -38,3 +38,7 @@ pub fn read_vault(
     let vault = decrypt_vault(encrypted, &key)?;
     Ok(vault)
 }
+
+pub fn vault_exists(path: &str) -> bool {
+    std::path::Path::new(path).exists()
+}

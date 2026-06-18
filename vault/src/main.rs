@@ -1,31 +1,40 @@
-mod vault;
-mod storage;
+mod cli;
 mod crypt;
+mod session;
+mod storage;
+mod vault;
 
-use vault::{Vault, Entry};
-use storage::{read_vault, write_vault};
+use session::Session;
+use storage::vault_exists;
+use cli::get_choice;
 
 fn main() {
     let path = "vault.enc";
-    let password = "test_password";
 
-    let mut vault = read_vault(path, password).unwrap_or_else(|_| {
-        println!("Creating new vault...");
-        Vault::new()
-    });
+    if !vault_exists(path) {
+        println!("No vault found.");
+        println!("1. Create new vault");
+        println!("2. Exit");
 
-    let entry = Entry::new(
-        "GitHub".to_string(),
-        "logan".to_string(),
-        "password123".to_string(),
-        Some("https://github.com".to_string()),
-        None,
-    );
+        let choice = get_choice();
+        let mut session: Option<Session>;
 
-    vault.add_entry(entry);
 
-    vault.list_entries();
+        match choice.as_str() {
+            "1" => {
+                session = Session::create(path).unwrap();
+            }
 
-    write_vault(path, &vault, password)
-        .expect("Failed to save vault");
+            "2" => {
+                println!("Goodbye!");
+            }
+
+            _ => {
+                println!("Invalid option");
+            }
+        }
+        
+    } else {
+        session = Session::unlock(path).unwrap();
+    }
 }
