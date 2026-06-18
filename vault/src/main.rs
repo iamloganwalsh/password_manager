@@ -1,3 +1,4 @@
+mod app;
 mod cli;
 mod crypt;
 mod session;
@@ -17,12 +18,11 @@ fn main() {
         println!("2. Exit");
 
         let choice = get_choice();
-        let mut session: Option<Session>;
-
 
         match choice.as_str() {
             "1" => {
-                session = Session::create(path).unwrap();
+                let session = Session::create(path).unwrap();
+                app::run(session);
             }
 
             "2" => {
@@ -35,6 +35,9 @@ fn main() {
         }
         
     } else {
-        session = Session::unlock(path).unwrap();
+        let session = Session::unlock(path).unwrap();
+        app::run(session);
     }
+
+    return
 }

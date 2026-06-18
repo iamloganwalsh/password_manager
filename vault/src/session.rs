@@ -7,6 +7,7 @@ use crate::cli::get_password;
 pub struct Session {
     pub vault: Vault,
     pub key: [u8; 32],
+    pub salt: String,
 }
 
 impl Session {
@@ -16,13 +17,16 @@ impl Session {
         let password = get_password();
         let salt = generate_salt();
         let key = derive_key(&password, &salt)?;
-        let vault = Vault::new();
-        let encrypted = encrypt_vault(&vault, &key, salt.as_str())?;
-        let json = serde_json::to_string_pretty(&encrypted)?;
-        std::fs::write(path, json)?;
-        println!("Vault created successfully");
+        
+        let session = Session {
+            vault: Vault::new(), 
+            key: key, 
+            salt: salt.to_string()
+        };
 
-        Ok(Self { vault, key })
+        session.save(path)?;
+
+        Ok(session)
     }
 
     pub fn unlock(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
@@ -35,7 +39,19 @@ impl Session {
         let salt = SaltString::new(&encrypted.salt)?;
         let key = derive_key(&password, &salt)?;
         let vault = decrypt_vault(encrypted, &key)?;
+
         println!("Vault unlocked & session created");
-        Ok(Self { vault, key })
+        
+        Ok(Self { 
+            vault, 
+            key, 
+            salt: salt.to_string() })
+    }
+
+    pub fn save(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let encrypted = encrypt_vault(&self.vault, &self.key, &self.salt)?;
+        let json = serde_json::to_string_pretty(&encrypted)?;
+        std::fs::write(path, json)?;
+        Ok(())
     }
 }
