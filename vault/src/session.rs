@@ -1,4 +1,5 @@
 use argon2::password_hash::SaltString;
+use std::path::PathBuf;
 use crate::vault::Vault;
 use crate::storage;
 use crate::crypt::{generate_salt, derive_key, encrypt_vault, decrypt_vault};
@@ -8,6 +9,7 @@ pub struct Session {
     pub vault: Vault,
     pub key: [u8; 32],
     pub salt: String,
+    pub path: PathBuf,
 }
 
 impl Session {
@@ -21,10 +23,11 @@ impl Session {
         let session = Session {
             vault: Vault::new(), 
             key: key, 
-            salt: salt.to_string()
+            salt: salt.to_string(),
+            path: path.into()
         };
 
-        session.save(path)?;
+        session.save()?;
 
         Ok(session)
     }
@@ -41,17 +44,18 @@ impl Session {
         let vault = decrypt_vault(encrypted, &key)?;
 
         println!("Vault unlocked & session created");
-        
+
         Ok(Self { 
             vault, 
             key, 
-            salt: salt.to_string() })
+            salt: salt.to_string(),
+            path: path.into() })
     }
 
-    pub fn save(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
         let encrypted = encrypt_vault(&self.vault, &self.key, &self.salt)?;
         let json = serde_json::to_string_pretty(&encrypted)?;
-        std::fs::write(path, json)?;
+        std::fs::write(&self.path, json)?;
         Ok(())
     }
 }

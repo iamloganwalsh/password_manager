@@ -28,10 +28,20 @@ pub fn run(mut session: Session) {
             }
 
             "4" => {
-                println!("Saving...");
+                match session.save() {
+                    Ok(_) => println!("Vault saved."),
+                    Err(e) => println!("Save failed: {e}"),
+                }
             }
 
             "5" => {
+                println!("Saving before exit...");
+
+                match session.save() {
+                    Ok(_) => println!("Saved."),
+                    Err(e) => println!("Save failed: {e}"),
+                }
+
                 println!("Goodbye!");
                 break;
             }
