@@ -7,7 +7,7 @@ mod vault;
 
 use session::Session;
 use storage::vault_exists;
-use cli::get_choice;
+use cli::get_input;
 
 fn main() {
     let path = "vault.enc";
@@ -17,7 +17,7 @@ fn main() {
         println!("1. Create new vault");
         println!("2. Exit");
 
-        let choice = get_choice();
+        let choice = get_input("Choice: ");
 
         match choice.as_str() {
             "1" => {

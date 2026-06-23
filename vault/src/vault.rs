@@ -43,14 +43,20 @@ impl Vault {
         self.entries.push(entry);
     }
 
-    pub fn list_entries(&self) {
-        for (i, entry) in self.entries.iter().enumerate() {
-            println!(
-                "{}: {} ({})",
-                i,
-                entry.name,
-                entry.username
-            );
+    pub fn delete_entry(&mut self, entry_name: &str) -> bool {
+        let vault_entries = self.entries();
+
+        for (i, entry) in vault_entries.iter().enumerate() {
+            if entry.name == entry_name {
+                self.entries.remove(i);
+                return true;
+            }
         }
+        false
+
+    }
+
+    pub fn entries(&self) -> &Vec<Entry> {
+        &self.entries
     }
 }

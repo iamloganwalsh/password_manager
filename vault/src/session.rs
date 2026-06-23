@@ -1,6 +1,6 @@
 use argon2::password_hash::SaltString;
 use std::path::PathBuf;
-use crate::vault::Vault;
+use crate::vault::{Vault, Entry};
 use crate::storage;
 use crate::crypt::{generate_salt, derive_key, encrypt_vault, decrypt_vault};
 use crate::cli::get_password;
@@ -57,5 +57,13 @@ impl Session {
         let json = serde_json::to_string_pretty(&encrypted)?;
         std::fs::write(&self.path, json)?;
         Ok(())
+    }
+
+    pub fn add_vault_entry(&mut self, entry: Entry) {
+        self.vault.add_entry(entry);
+    }
+
+    pub fn delete_vault_entry(&mut self, entry_name: &str) -> bool {
+        self.vault.delete_entry(entry_name)
     }
 }

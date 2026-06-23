@@ -1,7 +1,7 @@
 use std::io::{self, Write};
 
-pub fn get_choice() -> String {
-    print!("Choice: ");
+pub fn get_input(prompt: &str) -> String {
+    print!("{}", prompt);
     io::stdout().flush().unwrap();
 
     let mut input = String::new();
