@@ -1,4 +1,4 @@
-use rust_code::vault::{Entry, Vault};
+use password_manager::vault::{Entry, Vault};
 
 
 #[test]
@@ -63,7 +63,7 @@ fn deleting_entry_removes_entry() {
 
     vault.add_entry(entry);
 
-    vault.delete_entry(0);
+    vault.delete_entry("Github");
 
     assert_eq!(vault.entries.len(), 0);
 }

@@ -1,11 +1,11 @@
-use crate::crypt::{
+use password_manager::crypt::{
     generate_salt,
     derive_key,
     encrypt_vault,
     decrypt_vault,
 };
 
-use crate::vault::Vault;
+use password_manager::vault::Vault;
 
 
 #[test]
@@ -24,7 +24,7 @@ fn encrypted_vault_can_be_decrypted() {
     let encrypted = encrypt_vault(
         &vault,
         &key,
-        &salt
+        &salt.to_string()
     ).unwrap();
 
 
@@ -62,7 +62,7 @@ fn wrong_key_cannot_decrypt() {
     let encrypted = encrypt_vault(
         &vault,
         &correct_key,
-        &salt
+        &salt.to_string()
     ).unwrap();
 
 
