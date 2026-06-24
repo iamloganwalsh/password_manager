@@ -1,6 +1,6 @@
-use crate::session::Session;
-use crate::cli::get_input;
-use crate::vault::Entry;
+use password_manager::session::Session;
+use password_manager::cli::{get_input, get_password};
+use password_manager::vault::Entry;
 
 pub fn run(mut session: Session) {
 
@@ -13,7 +13,7 @@ pub fn run(mut session: Session) {
         println!("4. Exit");
         println!("9. Remove entry");
 
-        let choice = get_input("Choice: ");
+        let choice = get_input("Choice");
 
         match choice.as_str() {
             "1" => {
@@ -30,11 +30,11 @@ pub fn run(mut session: Session) {
             }
 
             "2" => {
-                let name = get_input("Name: ");
-                let username = get_input("Username: ");
-                let password = get_input("Password: ");
-                let url = get_input("URL (optional): ");
-                let notes = get_input("Notes (optional): ");
+                let name = get_input("Name");
+                let username = get_input("Username");
+                let password = get_password("Password");
+                let url = get_input("URL (optional)");
+                let notes = get_input("Notes (optional)");
 
                 let entry = Entry::new(
                     name,

@@ -1,19 +1,16 @@
-use std::io::{self, Write};
+use dialoguer::{Input, Password};
 
 pub fn get_input(prompt: &str) -> String {
-    print!("{}", prompt);
-    io::stdout().flush().unwrap();
-
-    let mut input = String::new();
-
-    io::stdin().read_line(&mut input).expect("Failed to read input");
-    input.trim().to_string()
+    Input::new()
+        .with_prompt(prompt)
+        .allow_empty(true)
+        .interact_text()
+        .expect("Failed to read input")
 }
 
-pub fn get_password() -> String {
-    print!("Master password: ");
-    io::stdout().flush().unwrap();
-
-    rpassword::read_password()
+pub fn get_password(prompt: &str) -> String {
+    Password::new()
+        .with_prompt(prompt)
+        .interact()
         .expect("Failed to read password")
 }

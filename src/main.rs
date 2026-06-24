@@ -1,15 +1,13 @@
-mod app;
-mod cli;
-mod crypt;
-mod session;
-mod storage;
-mod vault;
+#![allow(unused)]
 
-use session::Session;
-use storage::vault_exists;
-use cli::get_input;
+mod app;
+
+use password_manager::session::Session;
+use password_manager::storage::vault_exists;
+use password_manager::cli::{get_input, get_password};
 
 fn main() {
+
     let path = "vault.enc";
 
     if !vault_exists(path) {
@@ -17,11 +15,13 @@ fn main() {
         println!("1. Create new vault");
         println!("2. Exit");
 
-        let choice = get_input("Choice: ");
+        let choice = get_input("Choice");
+
 
         match choice.as_str() {
             "1" => {
-                let session = Session::create(path).unwrap();
+                let password = get_password("Master Password");
+                let session = Session::create(path, &password).unwrap();
                 app::run(session);
             }
 
@@ -35,7 +35,8 @@ fn main() {
         }
         
     } else {
-        let session = Session::unlock(path).unwrap();
+        let password = get_password("Master Password");
+        let session = Session::unlock(path, &password).unwrap();
         app::run(session);
     }
 
