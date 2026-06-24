@@ -6,4 +6,9 @@ target
 **/mutants.out*/
 
 # Other
-vault.*
+Cargo.lock
+*.swp
+.DS_Store
+dev.md
+*.enc
+*.json
