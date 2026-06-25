@@ -1,18 +1,19 @@
 use argon2::password_hash::SaltString;
 use std::path::PathBuf;
 use crate::vault::{Vault, Entry};
-use crate::storage;
+use std::io::Write;
 use crate::crypt::{generate_salt, derive_key, encrypt_vault, decrypt_vault};
+use crate::error::PasswordManagerError;
 
 pub struct Session {
-    pub vault: Vault,
-    pub key: [u8; 32],
-    pub salt: String,
-    pub path: PathBuf,
+    vault: Vault,
+    key: [u8; 32],
+    salt: String,
+    path: PathBuf,
 }
 
 impl Session {
-    pub fn create(path: &str, password: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn create(path: &str, password: &str) -> Result<Self, PasswordManagerError> {
         println!("Creating new vault");
 
         let salt = generate_salt();
@@ -30,7 +31,7 @@ impl Session {
         Ok(session)
     }
 
-    pub fn unlock(path: &str, password: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn unlock(path: &str, password: &str) -> Result<Self, PasswordManagerError> {
         println!("Unlocking vault");
 
         let data = std::fs::read_to_string(path)?;
@@ -49,10 +50,32 @@ impl Session {
             path: path.into() })
     }
 
-    pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
+    // Rewritten to prevent corrupted files and losing data by using a temporary file
+    pub fn save(&self) -> Result<(), PasswordManagerError> {
         let encrypted = encrypt_vault(&self.vault, &self.key, &self.salt)?;
         let json = serde_json::to_string_pretty(&encrypted)?;
-        std::fs::write(&self.path, json)?;
+        
+
+        let main_path = &self.path;
+        let backup_path = self.path.with_extension("enc.bak");
+        let tmp_path = self.path.with_extension("enc.tmp");
+
+        // Rotate main to backup
+        if main_path.exists() {
+            let _ = std::fs::remove_file(&backup_path);
+            std::fs::rename(main_path, backup_path);
+        }
+
+        // Create temp file to store new data
+        {
+            let mut file = std::fs::File::create(&tmp_path)?;
+            file.write_all(json.as_bytes())?;
+            file.sync_all()?;
+        }
+
+        // Promote temp file to main
+        std::fs::rename(tmp_path, main_path)?;
+
         Ok(())
     }
 

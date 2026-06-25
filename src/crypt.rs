@@ -6,6 +6,7 @@ use chacha20poly1305::{
 use serde::{Serialize, Deserialize};
 use rand::RngCore;
 use base64::{Engine as _, engine::general_purpose};
+use crate::error::PasswordManagerError;
 
 #[derive(Serialize, Deserialize)]
 pub struct EncryptedVault {
@@ -16,7 +17,7 @@ pub struct EncryptedVault {
 }
 
 // Derive 32-byte encryption key from password + salt
-pub fn derive_key(password: &str, salt: &SaltString) -> Result<[u8; 32], argon2::password_hash::Error> {
+pub fn derive_key(password: &str, salt: &SaltString) -> Result<[u8; 32], PasswordManagerError> {
     let argon2 = Argon2::default();
 
     let hash = argon2.hash_password(password.as_bytes(), salt)?.hash.ok_or(argon2::password_hash::Error::Password)?;
@@ -44,7 +45,7 @@ pub fn encrypt_vault(
     vault: &crate::vault::Vault,
     key: &[u8; 32],
     salt: &str,
-) -> Result<EncryptedVault, Box<dyn std::error::Error>> {
+) -> Result<EncryptedVault, PasswordManagerError> {
     let cipher = ChaCha20Poly1305::new(key.into());
 
     let nonce_bytes = generate_nonce();
@@ -52,7 +53,7 @@ pub fn encrypt_vault(
 
     let plaintext = serde_json::to_vec(vault)?;
 
-    let ciphertext = cipher.encrypt(nonce, plaintext.as_ref()).map_err(|e| format!("encryption failed: {e}"))?;
+    let ciphertext = cipher.encrypt(nonce, plaintext.as_ref())?;
 
     Ok(EncryptedVault {
         version: 1,
@@ -65,7 +66,7 @@ pub fn encrypt_vault(
 pub fn decrypt_vault(
     encrypted: EncryptedVault,
     key: &[u8; 32],
-) -> Result<crate::vault::Vault, Box<dyn std::error::Error>> {
+) -> Result<crate::vault::Vault, PasswordManagerError> {
     let cipher = ChaCha20Poly1305::new(key.into());
 
     let nonce_bytes = general_purpose::STANDARD.decode(encrypted.nonce)?;
@@ -73,7 +74,8 @@ pub fn decrypt_vault(
 
     let nonce = Nonce::from_slice(&nonce_bytes);
 
-    let plaintext = cipher.decrypt(nonce, ciphertext.as_ref()).map_err(|e| format!("decryption failed: {e}"))?;
+    let plaintext = cipher.decrypt(nonce, ciphertext.as_ref())
+        .map_err(|_| PasswordManagerError::InvalidPassword)?;
 
     let vault: crate::vault::Vault = serde_json::from_slice(&plaintext)?;
 

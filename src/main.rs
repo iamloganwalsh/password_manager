@@ -3,26 +3,37 @@
 mod app;
 
 use password_manager::session::Session;
-use password_manager::storage::vault_exists;
 use password_manager::cli::{get_input, get_password};
+use std::path::Path;
 
 fn main() {
 
     let path = "vault.enc";
 
-    if !vault_exists(path) {
+    if !Path::new(path).exists() {
         println!("No vault found.");
         println!("1. Create new vault");
         println!("2. Exit");
 
-        let choice = get_input("Choice");
-
-
-        match choice.as_str() {
+        match get_input("Choice").as_str() {
             "1" => {
-                let password = get_password("Master Password");
-                let session = Session::create(path, &password).unwrap();
-                app::run(session);
+                let password = loop {
+                    let pwd = get_password("Master Password");
+                    if pwd.len() < 8 {
+                        println!("Password must be at least 8 characters.");
+                        continue;
+                    }
+                    let confirm = get_password("Confirm Password");
+                    if pwd == confirm {
+                        break pwd;
+                    }
+                    println!("Passwords don't match.");
+                };
+
+                match Session::create(path, &password) {
+                    Ok(session) => app::run(session),
+                    Err(e) => println!("Error: {}", e),
+                }
             }
 
             "2" => {
@@ -36,8 +47,10 @@ fn main() {
         
     } else {
         let password = get_password("Master Password");
-        let session = Session::unlock(path, &password).unwrap();
-        app::run(session);
+        match Session::unlock(path, &password) {
+            Ok(session) => app::run(session),
+            Err(e) => println!("Error unlocking vault: {}", e),
+        }
     }
 
     return
